@@ -7,10 +7,17 @@ from pydantic_ai import Agent, RunContext, ModelRetry
 from common.agent_constants import (
     SUPERVISOR_AGENT_NAME, SUPERVISOR_INSTRUCTIONS,
     BENE_AGENT_NAME, BENE_INSTRUCTIONS,
-    INVEST_AGENT_NAME, INVEST_INSTRUCTIONS
+    INVEST_AGENT_NAME, INVEST_INSTRUCTIONS,
+    OPEN_ACCOUNT_AGENT_NAME, OPEN_ACCOUNT_INSTRUCTIONS,
 )
 from common.beneficiaries_manager import BeneficiariesManager
 from common.investment_manager import InvestmentManager, InvestmentAccount
+from common.domain_classes import OpenInvestmentAccountInput, WealthManagementClient
+
+from temporalio import workflow
+from temporalio.workflow import ParentClosePolicy
+
+from temporal_supervisor.workflows.open_account_workflow import OpenInvestmentAccountWorkflow
 
 logger = logging.getLogger(__name__)
 
@@ -273,6 +280,104 @@ async def route_from_investment_to_supervisor(ctx: RunContext[AgentDependencies]
         logger.error(f"Error in route_from_investment_to_supervisor: {e}")
         return f"I encountered a problem with the system. Please try again. (Debug: {str(e)})"
 
+# Open Account Output Functions
+
+# helper function 
+async def get_workflow_handle(workflow_id) -> WorkflowHandle:
+    client_helper = ClientHelper()
+    print(f"(OpenAccount.get_temporal_client) address is {client_helper.address}")
+    the_client = await Client.connect(**client_helper.client_config,
+                                      plugins=[ PydanticAIPlugin(), ClaimCheckPlugin() ])
+    return the_client.get_workflow_handle_for(OpenInvestmentAccountWorkflow.run, workflow_id)
+
+async def open_new_investment_account(ctx: RunContext[AgentDependencies], account_input: OpenInvestmentAccountInput) -> str:
+    """
+    Open a new investment account by starting a child workflow.
+
+    When running inside a Temporal workflow, this directly starts a child workflow
+    for the account opening process.
+
+    Args:
+        account_input: The account details (client_id, account_name, initial_amount)
+
+    Returns:
+        Success message with child workflow ID or error message
+    """
+    try:
+        # When running inside a Temporal workflow context, we can access workflow functions
+        if workflow.unsafe.in_workflow_context():
+            from common.client_helper import ClientHelper
+            from temporal_supervisor.workflows.open_account_workflow import OpenInvestmentAccountWorkflow
+
+            client_helper = ClientHelper()
+
+            # Get the current workflow's ID to create a unique child workflow ID
+            current_workflow_id = workflow.info().workflow_id
+            child_workflow_id = f"OpenAccount-{current_workflow_id}-{account_input.client_id}-{account_input.account_name}"
+
+            workflow.logger.info(f"Starting open account child workflow with ID: {child_workflow_id}")
+
+            # Start the child workflow directly - runs at workflow level!
+            await workflow.start_child_workflow(
+                OpenInvestmentAccountWorkflow.run,
+                args=[account_input],
+                id=child_workflow_id,
+                parent_close_policy=ParentClosePolicy.TERMINATE,
+                task_queue=client_helper.taskQueueOpenAccount
+            )
+
+            return f"Your account opening request has been submitted. Workflow ID: {child_workflow_id}"
+        else:
+            # Fallback for non-workflow contexts (testing, etc.)
+            logger.warning("open_new_investment_account called outside workflow context")
+            return "Account opening is only available when running in a workflow context."
+
+    except Exception as e:
+        logger.error(f"Error starting account opening workflow: {e}")
+        return f"I encountered a problem starting the account opening process. Please try again. (Debug: {str(e)})"
+
+async def get_current_client_info(ctx: RunContext[AgentDependencies], workflow_id: str) -> WealthManagementClient:
+    # get the handle from the workflow id
+    handle = await get_workflow_handle(workflow_id)
+    client = await handle.execute_update("get_client_details")
+    return client; 
+
+async def approve_kyc(ctx: RunContext[AgentDependencies], workflow_id: str):
+    handle = await get_workflow_handle(workflow_id)
+    await handle.signal(OpenInvestmentAccountWorkflow.verify_kyc)
+        
+async def update_client_details(ctx: RunContext[AgentDependencies], workflow_id: str, client_details: WealthManagementClient) -> str: 
+    handle = await get_workflow_handle(workflow_id)
+    # convert the data class to a dict 
+    client_details_dict = asdict(client_details)
+    result = await handle.execute_update(OpenInvestmentAccountWorkflow.update_client_details,
+        args[client_details_dict])
+    return result
+
+async def route_from_open_account_to_supervisor(ctx: RunContext[AgentDependencies], client_id: str) -> str:
+    """
+    Route back to supervisor when the request is not related to opening investments,
+    or checking the status of a newly opened investment account. 
+    Use this immediately if the user asks about beneficiaries or other topics.
+
+    Args:
+        client_id: The client's ID
+    """
+    try:
+        if not client_id or client_id.strip() == "":
+            raise ValueError("client_id is required for routing")
+
+        debug_print(f"[{ctx.deps.current_agent_name}] Routing back to {SUPERVISOR_AGENT_NAME}")
+
+        ctx.deps.client_id = client_id
+        ctx.deps.next_agent = SUPERVISOR_AGENT_NAME
+        ctx.deps.trigger_message = "The user has a new request. Route it to the appropriate agent."
+
+        return ""  # Empty response - routing happens in main loop
+    except Exception as e:
+        logger.error(f"Error in route_from_open_account_to_supervisor: {e}")
+        return f"I encountered a problem with the system. Please try again. (Debug: {str(e)})"
+
 ### Confirmation Validation Helper
 
 def check_for_confirmation_in_history(context: RunContext[AgentDependencies], action_type: str) -> bool:
@@ -367,6 +472,20 @@ investment_agent = Agent(
         route_from_investment_to_supervisor
     ],
     system_prompt=INVEST_INSTRUCTIONS,
+)
+
+open_account_agent = Agent(
+    AGENT_MODEL,
+    name=OPEN_ACCOUNT_AGENT_NAME,
+    deps_type=AgentDependencies,
+    output_type=[
+        open_new_investment_account,
+        get_current_client_info,
+        approve_kyc,
+        update_client_details,
+        route_from_open_account_to_supervisor,
+    ],
+    system_prompt=OPEN_ACCOUNT_INSTRUCTIONS,
 )
 
 ### Tools
@@ -511,18 +630,18 @@ async def list_investments(context: RunContext[AgentDependencies]) -> list:
     return investment_mgr.list_investment_accounts(context.deps.client_id)
 
 
-@investment_agent.tool
-async def open_investment(context: RunContext[AgentDependencies],
-    name: str, balance: float):
-    """
-    Adds a new investment account for the given information
-    """
-    investment_account = InvestmentAccount(
-        client_id=context.deps.client_id,
-        name=name,
-        balance=balance)
+# @investment_agent.tool
+# async def open_investment(context: RunContext[AgentDependencies],
+#     name: str, balance: float):
+#     """
+#     Adds a new investment account for the given information
+#     """
+#     investment_account = InvestmentAccount(
+#         client_id=context.deps.client_id,
+#         name=name,
+#         balance=balance)
 
-    return investment_mgr.add_investment_account(investment_account)
+#     return investment_mgr.add_investment_account(investment_account)
 
 @investment_agent.tool
 async def close_investment(context: RunContext[AgentDependencies],

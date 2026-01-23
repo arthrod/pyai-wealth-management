@@ -150,16 +150,32 @@ temporal server start-dev
 
 In another terminal, start the worker.
 
-### Start the Worker
+### Start the Worker using the Python Open Investment Account Workflow (default)
 
 ```bash
 cd src/temporal_supervisor
 ./startlocalworker.sh
 ```
 
-In another terminal, start the REST API.
+If you want to use the Java Open Investment Account Workflow,
+you need to specify the name of the Task Queue when running the Python worker:
+
+```bash
+cd src/temporal_supervisor
+./startlocalworker.sh Open-Account-Java
+```
+
+and then start the Java worker, making sure you pass in the same name as you did 
+when you started the Python worker:
+
+```bash
+cd java
+./startlocalworker.sh Open-Account-Java
+```
 
 ### Start the API
+
+In another terminal, start the REST API.
 
 ```bash
 cd src/temporal_supervisor/api
@@ -175,6 +191,13 @@ npm start
 ```
 
 A new browser window opens where you can interact with the application. 
+
+If you are opening a new investment account, in another terminal
+### Send the Compliance Reviewed Signal 
+```bash
+cd src/temporal_supervisor
+./localsendcomplianceapproval.sh <Child Workflow ID>
+```
 
 Here is a screenshot of the UX walking through a few scenarios:
 
@@ -241,6 +264,22 @@ cd src/temporal_supervisor
 ./startcloudworker.sh
 ```
 
+If you want to use the Java Open Investment Account Workflow,
+you need to specify the name of the Task Queue when running the Python worker:
+
+```bash
+cd src/temporal_supervisor
+./startcloudworker.sh Open-Account-Java
+```
+
+and then start the Java worker, making sure you pass in the same name as you did 
+when you started the Python worker:
+
+```bash
+cd java
+./startcloudworker.sh Open-Account-Java
+```
+
 ### Start the API
 
 In another terminal, start the API using Temporal Cloud
@@ -260,3 +299,10 @@ npm start
 ```
 
 A new browser window opens where you can interact with the application. 
+
+If you are opening a new investment account, in another terminal
+### Send the Compliance Reviewed Signal 
+```bash
+cd src/temporal_supervisor
+./cloudsendcomplianceapproval.sh <Child Workflow ID>
+```

@@ -18,7 +18,8 @@ from common.agents import (
     AgentDependencies,
     supervisor_agent,
     beneficiary_agent,
-    investment_agent
+    investment_agent,
+    open_account_agent,
 )
 
 from common.agent_constants import BENE_AGENT_NAME, INVEST_AGENT_NAME
@@ -29,10 +30,11 @@ from temporal_supervisor.activities.event_stream_activities import EventStreamAc
 temporal_super_agent = TemporalAgent(supervisor_agent)
 temporal_bene_agent = TemporalAgent(beneficiary_agent)
 temporal_invest_agent = TemporalAgent(investment_agent)
+temporal_open_account_agent = TemporalAgent(open_account_agent)
 
 @workflow.defn
 class WealthManagementWorkflow(PydanticAIWorkflow):
-    __pydantic_ai_agents__ = [temporal_super_agent, temporal_bene_agent, temporal_invest_agent]
+    __pydantic_ai_agents__ = [temporal_super_agent, temporal_bene_agent, temporal_invest_agent, temporal_open_account_agent]
     
     def __init__(self):
         self.pending_chat_messages: asyncio.Queue = asyncio.Queue()
