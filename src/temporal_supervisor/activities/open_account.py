@@ -46,6 +46,7 @@ class OpenAccount:
     @activity.defn
     async def get_current_client_info(workflow_id: str) -> WealthManagementClient:
         # get the handle from the workflow id
+        activity.logger.info(f"Geting the current client info for {workflow_id}")
         handle = await OpenAccount.get_workflow_handle(workflow_id)
         client = await handle.execute_update("get_client_details")
         # client = await handle.execute_update(OpenInvestmentAccountWorkflow.get_client_details)

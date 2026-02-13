@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 @dataclass
 class OpenInvestmentAccountInput:
@@ -13,9 +14,10 @@ class OpenInvestmentAccountOutput:
 
 @dataclass
 class WealthManagementClient:
-    first_name: str = None
-    last_name: str = None
-    address: str = None
-    phone: str = None
-    email: str = None
-    marital_status: str= None
+    client_id: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    address: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    marital_status: Optional[str] = None

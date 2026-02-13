@@ -24,7 +24,7 @@ public class ServerInfo {
     }
 
     public static String getTaskqueue() {
-        return getEnv("TEMPORAL_TASK_QUEUE", "Supervisor");
+        return getEnv("TEMPORAL_TASK_QUEUE", "PY-AI-Supervisor");
     }
 
     public static String getTaskqueueOpenAccount() {

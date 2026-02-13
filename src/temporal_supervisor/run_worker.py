@@ -13,12 +13,12 @@ from pydantic_ai.durable_exec.temporal import (
 
 from common.client_helper import ClientHelper
 from temporal_supervisor.activities.event_stream_activities import EventStreamActivities
+from temporal_supervisor.activities.local_activities import LocalActivities
 from temporal_supervisor.activities.clients import ClientActivities
 from temporal_supervisor.activities.open_account import OpenAccount
 from temporal_supervisor.activities.investments import Investments
 from temporal_supervisor.workflows.supervisor_workflow import WealthManagementWorkflow
 from temporal_supervisor.workflows.open_account_workflow import OpenInvestmentAccountWorkflow
-
 
 from temporal_supervisor.claim_check.claim_check_plugin import ClaimCheckPlugin
 
@@ -62,10 +62,11 @@ async def main():
             ClientActivities.update_client,
             OpenAccount.get_current_client_info,
             OpenAccount.update_client_details,
-            OpenAccount.approve_kyc,            
+            OpenAccount.approve_kyc,
             EventStreamActivities.append_chat_interaction,
             EventStreamActivities.append_status_update,
             EventStreamActivities.delete_conversation,
+            LocalActivities.get_task_queue_open_account,
         ],
     )
 
