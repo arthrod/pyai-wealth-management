@@ -1,17 +1,15 @@
-# Wealth Management Multi-Agent Example using Pydantic AI Framework 
+# Research Blog Drafting Multi-Agent Example using Pydantic AI Framework 
 
-Demonstrates how to use the Pydantic AI Framework with Temporal. It shows how to coordinate between multiple agents that deal with specific domains of expertise.
+Demonstrates how to use the Pydantic AI Framework with Temporal for a supervisor-researcher-writer orchestration.
 
 The supervisor agent is responsible for directing the actions to the appropriate
 helper agents.
 
-Scenarios currently implmeneted include
-* Add Beneficiary - add a new beneficiary to your account
-* List Beneficiaries - shows a list of beneficiaries and their relationship to the account owner
-* Delete Beneficiary - delete a beneficiary from your account
-* Open Investment Account - opens a new investment account 
-* List Investments - shows a list of accounts and their current balances
-* Close Investment Account - closes an investment account
+Scenarios currently implemented include
+* Topic Intake - supervisor captures blog drafting intent
+* Research Brief Generation - researcher prepares notes and structure
+* Blog Draft Generation - writer produces a complete draft
+* Clarification Routing - agents route back to supervisor when more input is needed
 
 ## Application Architecture
 The overall application architecture looks like this:
@@ -200,17 +198,14 @@ And in another terminal you can run the following commands:
 # starts a workflow execution
 temporal workflow start --workflow-id ai-chat --type WealthManagementWorkflow --task-queue PY-AI-Supervisor 
 
-# send it a request using a signal
-temporal workflow signal --workflow-id ai-chat --name process_user_message --input '{"user_input":"Who are my beneficiaries?"}'
+# send a blog drafting request
+temporal workflow signal --workflow-id ai-chat --name process_user_message --input '{"user_input":"Draft a blog post about AI copilots for fintech teams."}'
 
 # retrieve the chat history directly from the workflow execution
 temporal workflow query --workflow-id ai-chat --type get_chat_history
 
-# send it the client id via a signal
-temporal workflow signal --workflow-id ai-chat --name process_user_message --input '{"user_input":"123"}'
-
-# ask about investments via a signal 
-temporal workflow signal --workflow-id ai-chat --name process_user_message --input '{"user_input":"what investments do I have?"}'
+# ask for a revision via another signal
+temporal workflow signal --workflow-id ai-chat --name process_user_message --input '{"user_input":"Revise it for a more technical audience."}'
 
 # ends the workflow execution
 temporal workflow signal --workflow-id ai-chat --name end_workflow

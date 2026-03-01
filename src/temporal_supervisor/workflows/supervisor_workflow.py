@@ -17,22 +17,22 @@ from pydantic_ai.durable_exec.temporal import (
 from common.agents import (
     AgentDependencies,
     supervisor_agent,
-    beneficiary_agent,
-    investment_agent
+    researcher_agent,
+    writer_agent,
 )
 
-from common.agent_constants import BENE_AGENT_NAME, INVEST_AGENT_NAME
+from common.agent_constants import RESEARCHER_AGENT_NAME, WRITER_AGENT_NAME
 from common.user_message import ProcessUserMessageInput, ChatInteraction
 
 from temporal_supervisor.activities.event_stream_activities import EventStreamActivities
 
 temporal_super_agent = TemporalAgent(supervisor_agent)
-temporal_bene_agent = TemporalAgent(beneficiary_agent)
-temporal_invest_agent = TemporalAgent(investment_agent)
+temporal_research_agent = TemporalAgent(researcher_agent)
+temporal_writer_agent = TemporalAgent(writer_agent)
 
 @workflow.defn
 class WealthManagementWorkflow(PydanticAIWorkflow):
-    __pydantic_ai_agents__ = [temporal_super_agent, temporal_bene_agent, temporal_invest_agent]
+    __pydantic_ai_agents__ = [temporal_super_agent, temporal_research_agent, temporal_writer_agent]
     
     def __init__(self):
         self.pending_chat_messages: asyncio.Queue = asyncio.Queue()
@@ -153,9 +153,9 @@ class WealthManagementWorkflow(PydanticAIWorkflow):
 
     def _get_current_agent(self) -> Agent:
         """Get the agent instance based on current_agent_name."""
-        if self.agent_deps.current_agent_name == BENE_AGENT_NAME:
-            return temporal_bene_agent
-        elif self.agent_deps.current_agent_name == INVEST_AGENT_NAME:
-            return temporal_invest_agent
+        if self.agent_deps.current_agent_name == RESEARCHER_AGENT_NAME:
+            return temporal_research_agent
+        elif self.agent_deps.current_agent_name == WRITER_AGENT_NAME:
+            return temporal_writer_agent
         else:
             return temporal_super_agent        

@@ -7,12 +7,16 @@ from typing import List
 from pydantic_ai import Agent, ModelMessage
 from pydantic_ai.messages import ModelRequest, UserPromptPart
 
-from common.agent_constants import SUPERVISOR_AGENT_NAME, BENE_AGENT_NAME, INVEST_AGENT_NAME
+from common.agent_constants import (
+    SUPERVISOR_AGENT_NAME,
+    RESEARCHER_AGENT_NAME,
+    WRITER_AGENT_NAME,
+)
 from common.agents import (
     AgentDependencies,
     supervisor_agent,
-    beneficiary_agent,
-    investment_agent
+    researcher_agent,
+    writer_agent,
 )
 
 ### Logging Configuration
@@ -21,7 +25,7 @@ from common.agents import (
 #                     format="%(asctime)s | %(levelname)s | %(filename)s:%(lineno)s | %(message)s")
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-logger.info("Wealth Management Pydantic Chatbot Example Starting")
+logger.info("Research-to-blog Pydantic chatbot example starting")
 
 ### Debug Configuration
 DEBUG_MODE = False  # Set to True to see handoff routing debug messages
@@ -32,13 +36,13 @@ def debug_print(message: str):
         print(message)
 
 
-class PydanticAIWealthManagement:
+class PydanticAIBlogDrafting:
     def __init__(self):
         self.agent_deps = AgentDependencies()
         self.message_history: List[ModelMessage] = []
 
     async def run_agent_loop(self):
-        print("Welcome to ABC Wealth Management. How can I help you?")
+        print("Welcome to the blog drafting studio. Share a topic to begin.")
 
         while True:
             user_input = input(f"\n[{self.agent_deps.current_agent_name}] Enter your message: ")
@@ -105,16 +109,16 @@ class PydanticAIWealthManagement:
 
     def _get_current_agent(self) -> Agent:
         """Get the agent instance based on current_agent_name."""
-        if self.agent_deps.current_agent_name == BENE_AGENT_NAME:
-            return beneficiary_agent
-        elif self.agent_deps.current_agent_name == INVEST_AGENT_NAME:
-            return investment_agent
+        if self.agent_deps.current_agent_name == RESEARCHER_AGENT_NAME:
+            return researcher_agent
+        elif self.agent_deps.current_agent_name == WRITER_AGENT_NAME:
+            return writer_agent
         else:
             return supervisor_agent
 
 async def main():
-    wealth_management_flow = PydanticAIWealthManagement()
-    await wealth_management_flow.run_agent_loop()
+    blog_drafting_flow = PydanticAIBlogDrafting()
+    await blog_drafting_flow.run_agent_loop()
 
 if __name__ == "__main__":
      asyncio.run(main())

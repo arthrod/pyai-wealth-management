@@ -1,0 +1,14 @@
+run_id=20260301T053714Z_chain
+prompt=Research this topic for a blog draft with practical, local-market examples: Legal tech strategies for small legal markets
+
+STEP_INTERACTIONS:
+1. agent=Researcher Agent next=Writer Agent
+   input=Research this topic for a blog draft with practical, local-market examples: Legal tech strategies for small legal markets
+   output=[empty]
+   trigger=Draft a polished blog post using the prepared research notes. Topic: Legal tech strategies for small legal markets Research notes: Legal tech strategies for small legal markets focus on affordable, scalable tools tailore...
+   state.blog_topic=Legal tech strategies for small legal markets state.research_notes_chars=1105
+
+2. agent=Writer Agent next=none
+   input=Draft a polished blog post using the prepared research notes. Topic: Legal tech strategies for small legal markets Research notes: Legal tech strategies for small legal markets focus on affordable, scalable tools tailore...
+   output=**Legal Tech Strategies for Small Legal Markets: Practical Tools and Local Examples**  For law firms and solo practitioners in small legal markets, the promise of legal technology is not just about innovation—it’s about ...
+   state.blog_topic=Legal tech strategies for small legal markets state.research_notes_chars=1105

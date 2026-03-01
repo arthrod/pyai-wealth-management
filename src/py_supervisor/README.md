@@ -1,16 +1,14 @@
-# Wealth Management Multi-Agent example using Pydantic AI Framework
+# Research Blog Drafting Multi-Agent Example using Pydantic AI Framework
 
-Demonstrates how to use Pydantic AI Framework with multiple agents
+Demonstrates how to use Pydantic AI Framework with a supervisor, researcher, and writer orchestration.
 
 The Temporal version of this example is located [here](src/temporal_supervisor/README.md)
 
-Scenarios current implemented include
-* Add Beneficiary - add a new beneficiary to your account
-* List Beneficiaries - shows a list of beneficiaries and their relationship to the account owner
-* Delete Beneficiary - delete a beneficiary from your account
-* Open Investment Account - opens a new investment account
-* List Investments - shows a list of accounts and their current balances
-* Close Investment Account - closes an investment account
+Scenarios currently implemented include
+* Topic Intake - supervisor captures the blog topic
+* Research Briefing - researcher builds structured notes
+* Blog Drafting - writer produces a complete draft
+* Clarification Routing - specialized agents can route back to supervisor when needed
 
 ## Prerequisites
 * [uv](https://docs.astral.sh/uv/) - Python package and project manager
@@ -37,29 +35,27 @@ uv run python -m py_supervisor.main
 
 Example Output
 ```
-Welcome to ABC Wealth Management. How can I help you?
+Welcome to the blog drafting studio. Share a topic to begin.
 
-[Supervisor Agent] Enter your message: Who are my beneficiaries?
-To help you with your beneficiaries, could you please provide your client ID?
+[Supervisor Agent] Enter your message: Draft a blog post about agent orchestration for startup founders.
+# Agent Orchestration for Startup Founders: A Practical Guide
 
-[Supervisor Agent] Enter your message: 123
-Here are your current beneficiaries:
+## Introduction
+Startup founders are increasingly using AI agents to speed up research, decision-making, and content creation. A simple three-agent pattern can improve quality without adding process overhead.
 
-1. John Doe (son)
-2. Jane Doe (daughter)
-3. Joan Doe (spouse)
+## Why a Supervisor-Researcher-Writer Pattern Works
+1. The supervisor captures the request and keeps workflow state consistent.
+2. The researcher gathers structured notes, arguments, and evidence ideas.
+3. The writer converts those notes into a coherent, publication-ready narrative.
 
-Would you like to add, remove or list your beneficiaries?
+## Implementation Tips
+- Keep role boundaries strict so each agent has one job.
+- Persist intermediate notes to avoid losing context on retries.
+- Route ambiguous requests back to the supervisor for clarification.
 
-[Beneficiary Agent] Enter your message: What investments do I have?
-Here are your current investment accounts:
+## Conclusion
+This orchestration pattern gives founders faster first drafts with better structure and fewer hallucinations than a single-agent flow.
 
-1. Checking: $1,000.00
-2. Savings: $2,312.08
-3. 401K: $11,070.89
-
-Would you like to open, close or list your investment accounts?
-
-[Investment Agent] Enter your message: end
+[Writer Agent] Enter your message: end
 Agent loop complete.
 ```
